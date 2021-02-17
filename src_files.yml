@@ -91,3 +91,11 @@ components_behav:
   flags: [
     skip_synthesis,
   ]
+
+dummy_vip_rtl:
+ files: [
+    ../dummy_vip/rtl/dummy_top.sv,
+  ]
+  flags: [
+    skip_synthesis,
+  ]
