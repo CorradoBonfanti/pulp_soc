@@ -238,7 +238,7 @@ module pulp_soc import dm::*; #(
     localparam NB_L2_BANKS = `NB_L2_CHANNELS;
     //The L2 parameter do not influence the size of the memories. Change them in the l2_ram_multibank. This parameters
     //are only here to save area in the uDMA by only storing relevant bits.
-    localparam L2_BANK_SIZE          = 29184;            // in 32-bit words
+    localparam L2_BANK_SIZE          = 65536;            // in 32-bit words
     localparam L2_MEM_ADDR_WIDTH     = $clog2(L2_BANK_SIZE * NB_L2_BANKS) - $clog2(NB_L2_BANKS);    // 2**L2_MEM_ADDR_WIDTH rows (64bit each) in L2 --> TOTAL L2 SIZE = 8byte * 2^L2_MEM_ADDR_WIDTH
     localparam NB_L2_BANKS_PRI       = 2;
 
@@ -413,6 +413,14 @@ module pulp_soc import dm::*; #(
         .AXI_USER_WIDTH ( AXI_USER_WIDTH    )
     ) s_data_out_bus ();
 
+   AXI_BUS #(
+        .AXI_ADDR_WIDTH ( AXI_ADDR_WIDTH    ),
+        .AXI_DATA_WIDTH ( AXI_DATA_OUT_WIDTH),
+        .AXI_ID_WIDTH   ( AXI_ID_OUT_WIDTH  ),
+        .AXI_USER_WIDTH ( AXI_USER_WIDTH    )     
+   ) s_wide_alu_bus();
+   
+
     //assign s_data_out_bus.aw_atop = 6'b0;
 
     FLL_BUS #(
@@ -433,6 +441,7 @@ module pulp_soc import dm::*; #(
     APB_BUS s_apb_periph_bus ();
 
     XBAR_TCDM_BUS s_mem_rom_bus ();
+    XBAR_TCDM_BUS s_mem_exercise_bus ();
 
     XBAR_TCDM_BUS  s_mem_l2_bus[NB_L2_BANKS-1:0]();
     XBAR_TCDM_BUS  s_mem_l2_pri_bus[NB_L2_BANKS_PRI-1:0]();
@@ -509,12 +518,13 @@ module pulp_soc import dm::*; #(
     l2_ram_multi_bank #(
         .NB_BANKS              ( NB_L2_BANKS )
     ) l2_ram_i (
-        .clk_i           ( s_soc_clk          ),
-        .rst_ni          ( s_soc_rstn         ),
-        .init_ni         ( 1'b1               ),
-        .test_mode_i     ( dft_test_mode_i    ),
-        .mem_slave       ( s_mem_l2_bus       ),
-        .mem_pri_slave   ( s_mem_l2_pri_bus   )
+        .clk_i                ( s_soc_clk          ),
+        .rst_ni               ( s_soc_rstn         ),
+        .init_ni              ( 1'b1               ),
+        .test_mode_i          ( dft_test_mode_i    ),
+        .mem_slave            ( s_mem_l2_bus       ),
+        .mem_pri_slave        ( s_mem_l2_pri_bus   ),
+        .additional_pri_slave ( s_mem_exercise_bus )
     );
 
 
@@ -803,7 +813,9 @@ module pulp_soc import dm::*; #(
         .apb_peripheral_bus    ( s_apb_periph_bus    ),
         .l2_interleaved_slaves ( s_mem_l2_bus        ),
         .l2_private_slaves     ( s_mem_l2_pri_bus    ),
-        .boot_rom_slave        ( s_mem_rom_bus       )
+        .boot_rom_slave        ( s_mem_rom_bus       ),
+        .additional_pri_slave  ( s_mem_exercise_bus  ),
+        .wide_alu_slave        ( s_wide_alu_bus      )
         );
 
     /* Debug Subsystem */
@@ -956,6 +968,21 @@ module pulp_soc import dm::*; #(
         .per_master_r_rdata_i ( dm_slave_rdata             )
      );
 
+   dummy_top i_dummy_top();
+
+   wide_alu_top #(
+                  .AXI_ADDR_WIDTH(AXI_ADDR_WIDTH),
+                  .AXI_DATA_WIDTH(AXI_DATA_WIDTH),
+                  .AXI_ID_WIDTH(AXI_ID_OUT_WIDTH),
+                  .AXI_USER_WIDTH(AXI_USER_WIDTH)
+                  ) i_wide_alu (
+                  .clk_i(s_soc_clk),
+                  .rst_ni(s_soc_rstn),
+                  .test_mode_i(dft_test_mode_i),
+                  .axi_slave(s_wide_alu_bus)
+                  );
+   
+   
      assign slave_grant = dm_slave_req;
      always_ff @(posedge s_soc_clk or negedge s_soc_rstn) begin : apb2per_valid
          if(~s_soc_rstn) begin

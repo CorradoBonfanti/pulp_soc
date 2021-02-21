@@ -92,9 +92,30 @@ components_behav:
     skip_synthesis,
   ]
 
+
 dummy_vip_rtl:
- files: [
+  incdirs: [
+    ../../rtl/includes,
+  ]
+  targets: [
+    rtl,
+  ]
+  files: [
     ../dummy_vip/rtl/dummy_top.sv,
+  ]
+  flags: [
+    skip_synthesis,
+  ]
+
+wide_alu_rtl:
+  incdirs: [
+    ../../rtl/includes,
+  ]
+  targets: [
+    rtl,
+  ]
+  files: [
+    ../wide_alu/wide_alu_top.sv,
   ]
   flags: [
     skip_synthesis,
