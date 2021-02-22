@@ -972,7 +972,6 @@ module pulp_soc import dm::*; #(
 
    wide_alu_top #(
                   .AXI_ADDR_WIDTH(AXI_ADDR_WIDTH),
-                  .AXI_DATA_WIDTH(AXI_DATA_OUT_WIDTH),
                   .AXI_ID_WIDTH(AXI_ID_OUT_WIDTH),
                   .AXI_USER_WIDTH(AXI_USER_WIDTH)
                   ) i_wide_alu (
