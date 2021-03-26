@@ -120,3 +120,7 @@ riscv-dbg:
 register_interface:
   commit: v0.2.1
   domain: [soc]
+dummy_vip:
+  commit: master
+  server: https://github.com
+  group: CorradoBonfanti
